@@ -54,9 +54,18 @@ def get_nutrition_from_gemini(food, api_key):
 
 # --- Google Sheets Logging Function ---
 def log_to_google_sheets(food, nutrition_json, timestamp):
-    creds_path = "service_account.json"
-    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds = Credentials.from_service_account_file(creds_path, scopes=scope)
+    # Check if running on Streamlit Cloud (with secrets)
+    if "gcp_service_account" in st.secrets:
+        # Use service account info from secrets
+        service_account_info = st.secrets["gcp_service_account"]
+        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+        creds = Credentials.from_service_account_info(service_account_info, scopes=scope)
+    else:
+        # Fallback to local file for development
+        creds_path = "service_account.json"
+        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+        creds = Credentials.from_service_account_file(creds_path, scopes=scope)
+    
     client = gspread.authorize(creds)
     sheet = client.open_by_url("https://docs.google.com/spreadsheets/d/1Oo-ZlGXV2gioSCmp_x8s_cqJDDKR4shXjWzJqacZYxA/edit?usp=sharing")
     worksheet = sheet.sheet1
